@@ -1,0 +1,32 @@
+cabal-version:      3.0
+name:               free-list-alloc-repo
+version: 0.1.0.0
+
+license:            MIT
+license-file:       LICENSE
+author:             Nikolay Alferuk
+maintainer:         alferukn@gmail.com
+category:           System
+build-type:         Simple
+
+common warnings
+    ghc-options: -Wall
+
+library
+    import:           warnings
+    exposed-modules:  FreeListAllocator
+    build-depends:    base ^>=4.18.3.0
+    hs-source-dirs:   src/main
+    default-language: Haskell2010
+
+test-suite free-list-alloc-repo-test
+    import:           warnings
+    type:             exitcode-stdio-1.0
+    main-is:          free-list-alloc-tests.hs
+    hs-source-dirs:   src/test
+    build-depends:    
+        base ^>=4.18.3.0,
+        free-list-alloc-repo,
+        tasty,
+        tasty-hunit
+    default-language: Haskell2010
