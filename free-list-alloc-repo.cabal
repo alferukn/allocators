@@ -19,10 +19,10 @@ library
     hs-source-dirs:   src/main
     default-language: Haskell2010
 
-test-suite free-list-alloc-repo-test
+test-suite FreeListAllocatorTests
     import:           warnings
     type:             exitcode-stdio-1.0
-    main-is:          free-list-alloc-tests.hs
+    main-is:          FreeListAllocatorTests.hs
     hs-source-dirs:   src/test
     build-depends:    
         base ^>=4.18.3.0,
