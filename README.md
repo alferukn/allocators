@@ -10,9 +10,9 @@ This repository contains free-list allocator implementation on haskell
 ```text
 /src
 ├── main
-│   └── free-list-alloc.hs
+│   └── FreeListAllocator.hs
 └── test
-    └── free-list-alloc-tests.hs
+    └── FreeListAllocatorTests.hs
 ```
 
 ---
