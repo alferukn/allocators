@@ -23,37 +23,47 @@ unitTests = testGroup "Unit Test"
         state2 @?= Nothing
 
         , testCase "Successful allocation" $ do
-        let initState = initAllocator 100
-            (addr1, state1) = allocate 20 initState
-            (addr2, state2) = allocate 80 state1
-        addr1 @?= Just 0
-        addr2 @?= Just 20
-        state1 @?= AllocatorState [Block 20 80]
-        state2 @?= AllocatorState []
+        let nState = initAllocator 100
+        case nState of
+            Nothing -> assertFailure "initAllocator failed to create state"
+            Just initState -> do 
+                let res1 = allocate 20 initState
+                res1 @?= Just (Just 0, AllocatorState [Block 20 80])
+
+                case res1 of
+                    Just (Just _, state1) -> do
+                        let res2 = allocate 80 state1
+                        res2 @?= Just (Just 20, AllocatorState [])
+                    _ -> assertFailure "First allocation unexpectedly failed"
 
         , testCase "Unsuccessful allocation" $ do
-        let initState = initAllocator 100
-            (addr1, state1) = allocate 80 initState
-            (addr2, state2) = allocate 80 state1
-        addr1 @?= Just 0
-        addr2 @?= Nothing
-        state1 @?= AllocatorState [Block 80 20]
-        state2 @?= AllocatorState [Block 80 20]
+        let nState = initAllocator 100
+        case nState of
+            Nothing -> assertFailure "initAllocator failed to create state"
+            Just initState -> do 
+                let res1 = allocate 80 initState
+                res1 @?= Just (Just 0, AllocatorState [Block 80 20])
+
+                case res1 of
+                    Just (Just _, state1) -> do
+                        let res2 = allocate 80 state1
+                        res2 @?= Just (Nothing, AllocatorState [Block 80 20])
+                    _ -> assertFailure "First allocation unexpectedly failed"
 
         , testCase "Allocate: zero or negative size" $ do
-        let initState = initAllocator 100
-            (addr1, state1) = allocate 0 initState
-            (addr2, state2) = allocate (-5) state1
-        addr1 @?= Nothing
-        addr2 @?= Nothing
-        state1 @?= AllocatorState [Block 0 100]
-        state2 @?= AllocatorState [Block 0 100]
+        let nState = initAllocator 100
+        case nState of
+            Nothing -> assertFailure "initAllocator failed to create state"
+            Just initState -> do 
+                let res1 = allocate 0 initState
+                    res2 = allocate (-5) initState
+                res1 @?= Nothing
+                res2 @?= Nothing
 
         , testCase "Allocate: fit in the middle of free list" $ do
         let state = AllocatorState [Block 0 10, Block 20 20, Block 50 100]
-            (addr, newState) = allocate 20 state
-        addr @?= Just 20
-        newState @?= AllocatorState [Block 0 10, Block 50 100]
+            res = allocate 20 state
+        res @?= Just (Just 20, AllocatorState [Block 0 10, Block 50 100])
 
         , testCase "Basic deallocate" $ do
         let startState = AllocatorState []

@@ -12,20 +12,21 @@ data AllocatorState = AllocatorState {
         freeBlocks :: [Block]
 } deriving (Show, Eq)
 
-initAllocator :: Size -> AllocatorState
-initAllocator maxSize = AllocatorState {
-        freeBlocks = [Block 0 maxSize]
-}
+initAllocator :: Size -> Maybe AllocatorState
+initAllocator maxSize 
+                | maxSize <= 0 = Nothing
+                | otherwise = Just $ AllocatorState { freeBlocks = [Block 0 maxSize] }
 
-allocate :: Size -> AllocatorState -> (Maybe Address, AllocatorState)
-allocate needSize (AllocatorState blocks) =
-        let (before, found) = break (\b -> bSize b >= needSize) blocks in
-        case found of
-                [] -> (Nothing, AllocatorState blocks)
-                (targetBlock : after) -> (Just addr, AllocatorState newFreeBlocks) where
-                        addr = bAddr targetBlock
-                        newFreeBlock = Block (addr + needSize) (bSize targetBlock - needSize)
-                        newFreeBlocks = before ++ (if bSize newFreeBlock > 0 then [newFreeBlock] else []) ++ after
+allocate :: Size -> AllocatorState -> Maybe (Maybe Address, AllocatorState)
+allocate needSize (AllocatorState blocks) 
+        | needSize <= 0 = Nothing
+        | otherwise = let (before, found) = break (\b -> bSize b >= needSize) blocks in
+                        case found of
+                                [] -> Just (Nothing, AllocatorState blocks)
+                                (targetBlock : after) -> Just (Just addr, AllocatorState newFreeBlocks) where
+                                        addr = bAddr targetBlock
+                                        newFreeBlock = Block (addr + needSize) (bSize targetBlock - needSize)
+                                        newFreeBlocks = before ++ (if bSize newFreeBlock > 0 then [newFreeBlock] else []) ++ after
 
 deallocate :: Block -> AllocatorState -> AllocatorState
 deallocate (Block deAddr deSize) (AllocatorState freeBlocks) =          -- will be rewrite
