@@ -29,47 +29,15 @@ allocate needSize (AllocatorState blocks)
                                         newFreeBlocks = before ++ (if bSize newFreeBlock > 0 then [newFreeBlock] else []) ++ after
 
 deallocate :: Block -> AllocatorState -> AllocatorState
-deallocate (Block deAddr deSize) (AllocatorState freeBlocks) =          -- will be rewrite
-        let endAddr = deAddr + deSize
-            (before, found) = break (\ b -> endAddr <= bAddr b) freeBlocks  --O(n)
-        in case found of
+deallocate newBlock (AllocatorState blocks) = AllocatorState (insertAndMerge newBlock blocks)
+        where
+                insertAndMerge :: Block -> [Block] -> [Block]
 
-                [] ->   if null before
-                        then AllocatorState [Block deAddr deSize]
-                        else let
-                                prevBlock = last before             --O(n)
-                                blocksBeforePrev = init before      --O(n)
-                                prevAddr = bAddr prevBlock
-                                prevSize = bSize prevBlock
-                             in if (prevAddr + prevSize) == deAddr
-                                --(++) - O(n). Quadruple O(n) in branch
-                                then AllocatorState (blocksBeforePrev ++ [Block prevAddr (prevSize + deSize)])
-                                else AllocatorState (before ++ [Block deAddr deSize])
+                insertAndMerge b [] = [b]
 
-                (nextBlock : after) -> let
-                        nextAddr = bAddr nextBlock
-                        nextSize = bSize nextBlock
-                        in if endAddr == nextAddr
-                        then if null before
-                                then AllocatorState (Block deAddr (deSize + nextSize) : after)
-                                else let
-                                        prevBlock = last before
-                                        blocksBeforePrev = init before
-                                        prevAddr = bAddr prevBlock
-                                        prevSize = bSize prevBlock
-                                     in 
-                                        if (prevAddr + prevSize) == deAddr
-                                        then AllocatorState (blocksBeforePrev ++ [Block prevAddr (prevSize + deSize + nextSize)] ++ after)
-                                        else AllocatorState (before ++ [Block deAddr (deSize + nextSize)] ++ after)
-
-                        else if null before
-                                then AllocatorState ([Block deAddr deSize] ++ found)
-                                else let 
-                                        prevBlock = last before
-                                        blocksBeforePrev = init before
-                                        prevAddr = bAddr prevBlock
-                                        prevSize = bSize prevBlock
-                                     in 
-                                        if (prevAddr + prevSize) == deAddr
-                                        then AllocatorState (blocksBeforePrev ++ [Block prevAddr (prevSize + deSize)] ++ found)
-                                        else AllocatorState (before ++ [Block deAddr deSize] ++ found)
+                insertAndMerge b1@(Block addr1 size1) (b2@(Block addr2 size2) : rest)
+                        | addr1 + size1 < addr2  = b1 : b2 : rest
+                        | addr1 + size1 == addr2 = insertAndMerge (Block addr1 (size1 + size2)) rest
+                        | addr2 + size2 == addr1 = insertAndMerge (Block addr2 (size2 + size1)) rest
+                        | addr2 + size2 < addr1  = b2 : insertAndMerge b1 rest
+                        | otherwise = error "Memory corruption: overlapping blocks in deallocate"
