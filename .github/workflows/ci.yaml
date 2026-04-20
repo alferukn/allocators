@@ -1,3 +1,5 @@
+name: CI
+
 on: 
   push:
     branches:
@@ -5,17 +7,40 @@ on:
   pull_request:
     branches:
       - 'main'
+
+
 jobs:
+  lint-and-format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check formatting with Ormolu
+        uses: haskell-actions/run-ormolu@v17
+
+      - name: Set up HLint
+        uses: haskell-actions/hlint-setup@v2
+
+      - name: 'Run HLint'
+        uses: haskell-actions/hlint-run@v2
+        with:
+          path: src/
+
   build-and-test:
+    needs: lint-and-format
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: haskell-actions/setup@v2
         with:
           ghc-version: '9.6.7'
-      - name: update
+          cabal-version: 'latest'
+
+      - name: Update
         run: cabal update
-      - name: build
+
+      - name: Build
         run: cabal build
-      - name: test
+
+      - name: Run Tests
         run: cabal test 
