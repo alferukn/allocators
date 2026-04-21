@@ -28,7 +28,7 @@ data Block = Block
   deriving (Show, Eq)
 
 -- | Current state of the free memory pool.
-data AllocatorState = AllocatorState
+newtype AllocatorState = AllocatorState
   { -- | List of available blocks (ordered by address).
     freeBlocks :: [Block]
   }
@@ -57,7 +57,7 @@ allocate needSize (AllocatorState blocks)
               where
                 addr = bAddr targetBlock
                 newFreeBlock = Block (addr + needSize) (bSize targetBlock - needSize)
-                newFreeBlocks = before ++ (if bSize newFreeBlock > 0 then [newFreeBlock] else []) ++ after
+                newFreeBlocks = before ++ [newFreeBlock | bSize newFreeBlock > 0] ++ after
 
 -- | Returns a previously allocated block to the pool.
 --
